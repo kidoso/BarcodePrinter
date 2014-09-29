@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import model.FileInfo;
 
@@ -22,7 +23,12 @@ public class BarcodeControls extends JPanel {
 		this.fileInfo = fileInfo;
 		this.view = view;
 		spinnerModel = new SpinnerNumberModel(fileInfo.getAmount(), 0, null, 1);
-		spinnerModel.addChangeListener(e -> valueChanged(e));
+		spinnerModel.addChangeListener(new ChangeListener() {			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				valueChanged(e);				
+			}
+		});
 
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] { 0, 50, 0 };

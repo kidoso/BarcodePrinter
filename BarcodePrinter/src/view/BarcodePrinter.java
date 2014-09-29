@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
@@ -18,15 +20,18 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import model.FileInfo;
 import model.Model;
 import controller.FilesController;
 import controller.PrintController;
+import javax.swing.JSpinner;
 
 @SuppressWarnings("serial")
 public class BarcodePrinter extends JFrame {
-	private Model model;
+	protected Model model;
 	private FilesController filesController;
 	private PrintController printController;
 	private JPanel filesView;
@@ -36,10 +41,12 @@ public class BarcodePrinter extends JFrame {
 	private SpinnerNumberModel paddingModelX;
 	private SpinnerNumberModel paddingModelY;
 	private JLabel counter;
+	private CustomSpinner marginSpinner;
+	private SpinnerNumberModel marginModel;
 
 	public BarcodePrinter() {
 		setTitle("BarcodePrinter");
-		setBounds(200, 100, 450, 768);
+		setBounds(200, 100, 634, 768);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		try {
 			setIconImage(ImageIO.read(new File("icon.png")));
@@ -52,31 +59,64 @@ public class BarcodePrinter extends JFrame {
 		filesController = new FilesController(model, this);
 		printController = new PrintController(model, this);
 
-		colsModel = new SpinnerNumberModel(new Integer(5), new Integer(1),
+		colsModel = new SpinnerNumberModel(model.getCols(), new Integer(1),
 				null, new Integer(1));
-		rowsModel = new SpinnerNumberModel(new Integer(16), new Integer(1),
+		rowsModel = new SpinnerNumberModel(model.getRows(), new Integer(1),
 				null, new Integer(1));
 
-		paddingModelX = new SpinnerNumberModel(new Integer(8), new Integer(0),
+		paddingModelX = new SpinnerNumberModel(model.getPaddingX(), new Integer(0),
 				null, new Integer(1));
-		paddingModelY = new SpinnerNumberModel(new Integer(7), new Integer(0),
+		paddingModelY = new SpinnerNumberModel(model.getPaddingY(), new Integer(0),
 				null, new Integer(1));
+		
+		marginModel = new SpinnerNumberModel(model.getMarginLeft(), Integer.MIN_VALUE, Integer.MAX_VALUE, 1);
 
 		initializeComponents();
 
 		// wiring
-		rowsModel.addChangeListener(e -> {
-			model.setRows((int) rowsModel.getValue());
-			notifyAmountChanged();
+		rowsModel.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				model.setRows((int) rowsModel.getValue());
+				notifyAmountChanged();				
+			}
 		});
-		colsModel.addChangeListener(e -> {
-			model.setCols((int) colsModel.getValue());
+		
+		colsModel.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				model.setCols((int) colsModel.getValue());
+			
 			notifyAmountChanged();
+			}
 		});
-		paddingModelX.addChangeListener(e -> model
-				.setPaddingX((int) paddingModelX.getValue()));
-		paddingModelY.addChangeListener(e -> model
-				.setPaddingY((int) paddingModelY.getValue()));
+		paddingModelX.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				model.setPaddingX((int) paddingModelX.getValue());
+				
+				
+			}
+		});
+		
+		paddingModelY.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				model.setPaddingY((int) paddingModelY.getValue());
+			}
+		});
+		marginModel.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				model.setMarginLeft((int)marginModel.getValue());
+				
+			}
+		});
 
 		notifyAmountChanged();
 	}
@@ -85,15 +125,21 @@ public class BarcodePrinter extends JFrame {
 		JPanel panel = new JPanel();
 		getContentPane().add(panel, BorderLayout.CENTER);
 		GridBagLayout gbl_panel = new GridBagLayout();
-		gbl_panel.columnWidths = new int[] { 0, 0, 43, 0, 52, 0, 0, 0 };
+		gbl_panel.columnWidths = new int[] { 0, 0, 43, 0, 52, 0, 0, 0, 0 };
 		gbl_panel.rowHeights = new int[] { 0, 0, 0, 0 };
-		gbl_panel.columnWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+		gbl_panel.columnWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
 				0.0, Double.MIN_VALUE };
 		gbl_panel.rowWeights = new double[] { 0.0, 0.0, 1.0, Double.MIN_VALUE };
 		panel.setLayout(gbl_panel);
 
 		JButton btnHinzufgen = new JButton("Hinzuf\u00FCgen");
-		btnHinzufgen.addActionListener(e -> filesController.addFiles());
+		btnHinzufgen.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				filesController.addFiles();				
+			}
+		});
 		GridBagConstraints gbc_btnHinzufgen = new GridBagConstraints();
 		gbc_btnHinzufgen.fill = GridBagConstraints.HORIZONTAL;
 		gbc_btnHinzufgen.insets = new Insets(0, 0, 5, 5);
@@ -118,7 +164,14 @@ public class BarcodePrinter extends JFrame {
 		panel.add(lblReihen, gbc_lblReihen);
 
 		JButton btnDrucken = new JButton("Drucken");
-		btnDrucken.addActionListener(e -> printController.doPrint());
+		btnDrucken.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				printController.doPrint();
+				
+			}
+		});
 
 		JLabel lblPadding = new JLabel("Padding Breite");
 		GridBagConstraints gbc_lblPadding = new GridBagConstraints();
@@ -134,9 +187,16 @@ public class BarcodePrinter extends JFrame {
 		gbc_lblPaddingHhe.gridx = 4;
 		gbc_lblPaddingHhe.gridy = 0;
 		panel.add(lblPaddingHhe, gbc_lblPaddingHhe);
+		
+		JLabel lblMarginLinks = new JLabel("Margin links");
+		GridBagConstraints gbc_lblMarginLinks = new GridBagConstraints();
+		gbc_lblMarginLinks.insets = new Insets(0, 0, 5, 5);
+		gbc_lblMarginLinks.gridx = 5;
+		gbc_lblMarginLinks.gridy = 0;
+		panel.add(lblMarginLinks, gbc_lblMarginLinks);
 		GridBagConstraints gbc_btnDrucken = new GridBagConstraints();
 		gbc_btnDrucken.insets = new Insets(0, 0, 5, 0);
-		gbc_btnDrucken.gridx = 6;
+		gbc_btnDrucken.gridx = 7;
 		gbc_btnDrucken.gridy = 0;
 		panel.add(btnDrucken, gbc_btnDrucken);
 
@@ -180,19 +240,27 @@ public class BarcodePrinter extends JFrame {
 		gbc_spinner1.gridx = 4;
 		gbc_spinner1.gridy = 1;
 		panel.add(paddingYSpinner, gbc_spinner1);
+		
+		marginSpinner = new CustomSpinner(marginModel);
+		GridBagConstraints gbc_marginSpinner = new GridBagConstraints();
+		gbc_marginSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_marginSpinner.insets = new Insets(0, 0, 5, 5);
+		gbc_marginSpinner.gridx = 5;
+		gbc_marginSpinner.gridy = 1;
+		panel.add(marginSpinner, gbc_marginSpinner);
 
 		counter = new JLabel("");
-		GridBagConstraints gbc_label = new GridBagConstraints();
-		gbc_label.insets = new Insets(0, 0, 5, 0);
-		gbc_label.gridx = 6;
-		gbc_label.gridy = 1;
-		panel.add(counter, gbc_label);
+		GridBagConstraints gbc_counter = new GridBagConstraints();
+		gbc_counter.insets = new Insets(0, 0, 5, 0);
+		gbc_counter.gridx = 7;
+		gbc_counter.gridy = 1;
+		panel.add(counter, gbc_counter);
 
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane
 				.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
-		gbc_scrollPane.gridwidth = 7;
+		gbc_scrollPane.gridwidth = 8;
 		gbc_scrollPane.fill = GridBagConstraints.BOTH;
 		gbc_scrollPane.gridx = 0;
 		gbc_scrollPane.gridy = 2;

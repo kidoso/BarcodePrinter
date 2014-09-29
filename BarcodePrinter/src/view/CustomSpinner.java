@@ -1,5 +1,8 @@
 package view;
 
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
@@ -8,7 +11,13 @@ public class CustomSpinner extends JSpinner {
 
 	public CustomSpinner(SpinnerNumberModel spinnerModel) {
 		super(spinnerModel);
-		addMouseWheelListener(e -> rotated(e.getWheelRotation()));
+		addMouseWheelListener(new MouseWheelListener() {
+			
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				rotated(e.getWheelRotation());
+			}
+		});
 	}
 
 	private void rotated(int wheelRotation) {

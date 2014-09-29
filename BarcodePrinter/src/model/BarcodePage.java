@@ -24,15 +24,22 @@ public class BarcodePage implements Printable {
 			return NO_SUCH_PAGE;
 		}
 
-		/*
-		 * User (0,0) is typically outside the imageable area, so we must
-		 * translate by the X and Y values in the PageFormat to avoid clipping
-		 */
+		
 		Graphics2D g = (Graphics2D) g1;
-		g.translate(pf.getImageableX(), pf.getImageableY());
+//		g.translate(pf.getImageableX(), pf.getImageableY());
+		
+//		double paperMarginW = 
+		
+		// 10mm margin left (and right)
+		double myImageableX = 10d*pf.getWidth()/210d;
+		// 12mm margin top (and bottom)
+		double myImageableY = 12d*pf.getHeight()/297d;
+		
+		double myImageableWidth = pf.getWidth()-2.0*myImageableX;
+		double myImageableHeight = pf.getHeight()-2.0*myImageableY;
 
-		double boxWidth = pf.getImageableWidth() / model.getCols();
-		double boxHeight = pf.getImageableHeight() / model.getRows();
+		double boxWidth = myImageableWidth / model.getCols();
+		double boxHeight = myImageableHeight / model.getRows();
 
 		int pageMax = model.getPageMax();
 		int i = 0;
@@ -49,20 +56,32 @@ public class BarcodePage implements Printable {
 						int row = i / model.getCols();
 						int col = i % model.getCols();
 
-						double imgX = col * pf.getImageableWidth()
-								/ model.getCols();
-						double imgY = row * pf.getImageableHeight()
-								/ model.getRows();
+						double imgX = (double)col * myImageableWidth
+								/ (double)model.getCols();
+						double imgY = (double)row * myImageableHeight
+								/ (double)model.getRows();
+						
+						imgX += myImageableX;
+						imgY += myImageableY;
 
-						int paddingX = model.getPaddingX();
-						int paddingY = model.getPaddingY();
+						double paddingX = model.getPaddingX();
+						double paddingY = model.getPaddingY();
 
 						// padding delta
-						imgX += col * paddingX / model.getCols();
-						imgY += row * paddingY / model.getRows();
+						imgX += paddingX;
+						imgY += paddingY;
+						
+						// margin
+						imgX+=model.getMarginLeft();
+						
+						
+						int iImgX = (int) Math.round(imgX);
+						int iImgY = (int) Math.round(imgY);
+						
+						double dImgWidth = boxWidth-2.0*paddingX;
+						double dImgHeight = boxHeight-2.0*paddingY;
 
-						g.drawImage(img, (int) imgX, (int) imgY, (int) boxWidth
-								- paddingX, (int) boxHeight - paddingY, null);
+						g.drawImage(img, iImgX, iImgY, (int) dImgWidth, (int) dImgHeight, null);
 
 						// increment for next round
 						i++;
